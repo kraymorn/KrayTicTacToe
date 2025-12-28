@@ -7,6 +7,8 @@ import { GameStatus } from './components/GameStatus'
 import { MoveHistory } from './components/MoveHistory'
 import { OnlineRoomManager } from './components/OnlineRoomManager'
 import { PlayerIndicator } from './components/PlayerIndicator'
+import { ReactionButtons } from './components/ReactionButtons'
+import { ReactionDisplay } from './components/ReactionDisplay'
 import { deleteRoom, subscribeToRoom, type OnlineGameRoom } from './services/onlineGameService'
 import { useGameStore } from './store/gameStore'
 import { getAIMove } from './utils/ai'
@@ -27,6 +29,7 @@ function App() {
     roomId,
     syncGameState,
     clearOnlineRoom,
+    onlinePlayerSymbol,
   } = useGameStore()
 
   const [showRoomManager, setShowRoomManager] = useState(false)
@@ -252,9 +255,16 @@ function App() {
               </MotionButton>
             </Flex>
 
-            <PlayerIndicator currentPlayer={currentPlayer} gameMode={gameMode} />
+            <PlayerIndicator
+              currentPlayer={currentPlayer}
+              gameMode={gameMode}
+              onlinePlayerSymbol={onlinePlayerSymbol}
+            />
 
             <GameBoard />
+
+            {/* Кнопки реакций для онлайн игры */}
+            {gameMode === 'online' && roomId && roomReady && <ReactionButtons />}
 
             {gameStatus !== 'playing' && <GameStatus />}
           </Box>
@@ -265,6 +275,9 @@ function App() {
           </Box>
         </Container>
       )}
+
+      {/* Отображение реакций оппонента для онлайн игры */}
+      {gameMode === 'online' && roomId && roomReady && <ReactionDisplay />}
     </Box>
   )
 }

@@ -1,6 +1,9 @@
-import { off, onValue, ref, remove, set, update } from 'firebase/database'
+import { off, onValue, push, ref, remove, set, update } from 'firebase/database'
 import { database } from '../config/firebase'
-import type { GameState, Player } from '../types/game.types'
+import type { GameState, Player, Reaction, ReactionType } from '../types/game.types'
+
+// Экспортируем типы для использования в других компонентах
+export type { Reaction, ReactionType }
 
 export type OnlineGameRoom = {
   roomId: string
@@ -9,6 +12,7 @@ export type OnlineGameRoom = {
   gameState: GameState
   createdAt: number
   lastActivity: number
+  reactions?: Record<string, Reaction>
 }
 
 export type OnlinePlayer = {
@@ -143,4 +147,61 @@ export async function deleteRoom(roomId: string): Promise<void> {
 // Генерация уникального ID игрока
 export function generatePlayerId(): string {
   return `player_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
+}
+
+// Константы реакций
+export const REACTIONS: Record<ReactionType, { emoji: string; text: string }> = {
+  great: { emoji: '👍', text: 'Отличный ход' },
+  bad: { emoji: '👎', text: 'Плохой ход' },
+  fire: { emoji: '🔥', text: 'Огонёк' },
+  heart: { emoji: '❤️', text: 'Сердечко' },
+  sleep: { emoji: '😴', text: 'Уснул ZzzZz' },
+  angry: { emoji: '😠', text: 'Ругань' },
+}
+
+// Отправка реакции оппоненту
+export async function sendReaction(
+  roomId: string,
+  playerId: string,
+  reactionType: ReactionType,
+  playerSymbol: Player,
+): Promise<void> {
+  const reactionsRef = ref(database, `rooms/${roomId}/reactions`)
+  const reaction: Reaction = {
+    type: reactionType,
+    emoji: REACTIONS[reactionType].emoji,
+    text: REACTIONS[reactionType].text,
+    timestamp: Date.now(),
+    fromPlayerId: playerId,
+    fromPlayerSymbol: playerSymbol,
+  }
+  await push(reactionsRef, reaction)
+}
+
+// Подписка на реакции в комнате
+export function subscribeToReactions(
+  roomId: string,
+  callback: (reactions: Reaction[]) => void,
+): () => void {
+  const reactionsRef = ref(database, `rooms/${roomId}/reactions`)
+
+  const unsubscribe = onValue(reactionsRef, (snapshot) => {
+    const reactionsData = snapshot.val()
+    if (!reactionsData) {
+      callback([])
+      return
+    }
+
+    // Преобразуем объект в массив и сортируем по времени
+    const reactions: Reaction[] = Object.values(reactionsData)
+      .filter((r): r is Reaction => r !== null)
+      .sort((a, b) => b.timestamp - a.timestamp) // Новые сначала
+
+    callback(reactions)
+  })
+
+  return () => {
+    off(reactionsRef)
+    unsubscribe()
+  }
 }

@@ -37,3 +37,14 @@ export type GameState = {
   aiDifficulty: AIDifficulty // уровень сложности ИИ
   moveHistory: MoveHistory[]
 }
+
+export type ReactionType = 'great' | 'bad' | 'fire' | 'heart' | 'sleep' | 'angry'
+
+export type Reaction = {
+  type: ReactionType
+  emoji: string
+  text: string
+  timestamp: number
+  fromPlayerId: string
+  fromPlayerSymbol?: Player // Символ игрока, отправившего реакцию
+}

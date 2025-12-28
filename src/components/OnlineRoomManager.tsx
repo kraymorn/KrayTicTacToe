@@ -1,4 +1,4 @@
-import { Box, Button, Heading, Input, Text, VStack } from '@chakra-ui/react'
+import { Box, Button, Heading, Input, Spinner, Text, VStack } from '@chakra-ui/react'
 import { motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import {
@@ -308,6 +308,23 @@ export const OnlineRoomManager = ({ onRoomReady }: OnlineRoomManagerProps) => {
     }
   }
 
+  const handleCopyRoomId = async () => {
+    try {
+      await navigator.clipboard.writeText(roomId)
+      setNotification({
+        type: 'success',
+        title: 'ID комнаты скопирован!',
+        description: 'Отправьте его другу',
+      })
+    } catch (err) {
+      setNotification({
+        type: 'error',
+        title: 'Ошибка копирования',
+        description: 'Скопируйте ID вручную',
+      })
+    }
+  }
+
   if (waitingForPlayer) {
     return (
       <>
@@ -370,8 +387,16 @@ export const OnlineRoomManager = ({ onRoomReady }: OnlineRoomManagerProps) => {
               fontWeight="bold"
               mb={4}
               color="white"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              gap={3}
             >
-              Ожидание игрока...
+              <Spinner
+                size="lg"
+                color="purple.400"
+              />
+              <Text as="span">Ожидание игрока...</Text>
             </MotionHeading>
 
             <Text fontSize="lg" color="gray.300" mb={6}>
@@ -409,6 +434,19 @@ export const OnlineRoomManager = ({ onRoomReady }: OnlineRoomManagerProps) => {
                 whileTap={{ scale: 0.95 }}
               >
                 📋 Копировать ссылку
+              </MotionButton>
+
+              <MotionButton
+                w="full"
+                onClick={handleCopyRoomId}
+                bgGradient="linear(to-r, purple.600, pink.600)"
+                color="white"
+                fontWeight="bold"
+                size="lg"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                🆔 Копировать только ID комнаты
               </MotionButton>
 
               <Text fontSize="sm" color="gray.400">
